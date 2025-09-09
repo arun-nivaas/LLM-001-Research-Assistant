@@ -1,38 +1,35 @@
 # Import necessary libraries
-from langchain_community.document_loaders import PyPDFLoader
 import pdfplumber
+import logging
+import streamlit as st
+from io import BytesIO
+from s3_client import s3_client
+from PyPDF2 import PdfReader
 
 
-# ==============================================================================================================================
-
-# Function to clean text
-# This function removes extra newlines, spaces, lines and page numbers from the text
-# def clean_text(t: str) -> str:
-#     t = t.replace('\r\n', '\n').replace('\r', '\n')
-#     t = re.sub(r'\n{3,}', '\n\n', t)
-#     t = re.sub(r'[ \t]{2,}', ' ', t)
-#     t = re.sub(r'Page \d+ of \d+', '', t, flags=re.I)
-#     t = re.sub(r'^[=\-_*\s]{5,}$', '', t, flags=re.MULTILINE)
-
-#     def normalize_headers(match):
-#         text = match.group(0)
-#         return text.title() 
-
-#     t = re.sub(r'^(?:[A-Z][A-Z\s]{2,})$', normalize_headers, t, flags=re.MULTILINE)
-#     return t.strip()
-
+logger = logging.getLogger(__name__)
 
 # Function to extract text from PDF file formats
-def extract_text_from_pdf(path):
+
+@st.cache_data(show_spinner=False)
+def extract_text_from_pdf(bucket_name: str, s3_key: str) -> str:
     text_parts = []
 
+    pdf_obj = s3_client.get_object(Bucket=bucket_name, Key=s3_key)
+    logger.info("Downloading file from S3 for processing...")
+    pdf_bytes = pdf_obj['Body'].read()
+    logger.info("Download successful.")
+
     # Step 1: Use LangChain’s PyPDFLoader
-    loader = PyPDFLoader(path)
-    docs = loader.load()
-    text_parts.extend([d.page_content for d in docs if d.page_content])
+    reader = PdfReader(BytesIO(pdf_bytes))
+    for page in reader.pages:
+        text = page.extract_text()
+
+        if text:
+            text_parts.append(text)
 
     # Step 2: Fallback → extract tables with pdfplumber
-    with pdfplumber.open(path) as pdf:
+    with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
         for page in pdf.pages:
             tables = page.extract_tables()
             for table in tables:

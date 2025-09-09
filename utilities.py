@@ -3,6 +3,7 @@ from langchain_community.tools.semanticscholar import SemanticScholarQueryRun
 from langchain_community.utilities.semanticscholar import SemanticScholarAPIWrapper
 from langchain_community.retrievers import WikipediaRetriever
 
+
 # Function to perform YouTube search
 def youtube_search(topic :str):
     youtube_search = YouTubeSearchTool()
@@ -18,8 +19,6 @@ def semantic_scholar(topic: str):
     s2_wrapper = SemanticScholarAPIWrapper(doc_content_chars_max=1000, top_k_results=5)
     scholar_tool = SemanticScholarQueryRun(api_wrapper=s2_wrapper)
     return scholar_tool.run(topic)
-
-
 
 
    

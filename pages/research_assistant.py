@@ -2,7 +2,7 @@ import streamlit as st
 import llm_client
 from const import Constants
 
-st.set_page_config(layout=Constants.WIDE)
+st.set_page_config(layout = Constants.WIDE)
 
 if "api_key" not in st.session_state:
     st.session_state.api_key = ""
@@ -10,7 +10,7 @@ if "api_key" not in st.session_state:
 if "agent_executor" not in st.session_state:
     st.session_state.agent_executor = None
 
-st.header("📊 Research Assistant")
+st.header(Constants.HEADER_TITLE_RESEARCH)
 st.markdown("---")
 st.markdown(
             "Easily explore any research topic with instant summaries, videos, and papers. "

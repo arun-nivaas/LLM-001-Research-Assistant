@@ -1,15 +1,10 @@
 import streamlit as st
 from const import Constants
+import markdown
 
-st.header("🔑 API Key Instructions")
+st.header(Constants.HEADER_TITLE_API_KEY)
 st.markdown("---")
-st.write("""
-        To unlock AI-powered research features, you’ll need an API key:
-
-        - **Google Gemini API Key** → [Google AI Studio](https://aistudio.google.com/)
-        
-        🔐 Once you get your key, paste it in the input box below and click **Submit Key**.
-""")
+st.write(markdown.api_key_info)
 
 api_key = st.text_input("Enter API Key", type= Constants.PASSWORD, placeholder="Paste your key here...")
 

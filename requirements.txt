@@ -26,3 +26,8 @@ wikipedia
 pytube
 pypdf
 langchain-chroma
+langsmith
+openevals
+boto3
+boto3-stubs
+PyPDF2
