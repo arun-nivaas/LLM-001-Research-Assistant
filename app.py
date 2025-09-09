@@ -1,29 +1,30 @@
 import streamlit as st
+from const import Constants
 
 # ---------Page Setup---------
 
 about_page = st.Page(
     page = "pages/about.py",
-    title="About",
+    title= Constants.TITLE_ABOUT,
     icon="📘",
     default=True,
 )
 
 api_key_page = st.Page(
     page = "pages/api_key.py",
-    title="API Key",
+    title= Constants.TITLE_API_KEY,
     icon="🔑",
     default=False,
 )
 research_page = st.Page(
     page = "pages/research_assistant.py",
-    title="Research Assistant",
+    title= Constants.TITLE_RESEARCH,
     icon="📊",
     default=False,
 )
 chat_bot_page = st.Page(
     page = "pages/chat_bot.py",
-    title="Chat Bot",
+    title= Constants.TITLE_CHAT_BOT,
     icon="💬",
     default=False,
 )
@@ -35,7 +36,7 @@ page = st.navigation(
     }
 )
 
-st.sidebar.badge("Version : 1.0.0")
+st.sidebar.badge(f"Version : {Constants.VERSION}")
 
 
 page.run()

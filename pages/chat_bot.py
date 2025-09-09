@@ -5,10 +5,26 @@ from txt_extraction import extract_text_from_pdf
 from rag_pipeline import PDFQA
 import tempfile
 from llm_client_rag import get_llm_client_rag 
-import prompts
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from const import Constants
+from dotenv import load_dotenv
+import os
+from langsmith import Client
+import uuid
+from s3_client import s3_client, S3_BUCKET_NAME
+
+
+# Load environment variables from .env file
+load_dotenv(dotenv_path=".env", override=True)
+LANGSMITH_API_KEY = os.getenv(Constants.LANGSMITH_API_KEY)
+LANGSMITH_TRACING = os.getenv(Constants.LANGSMITH_TRACING)
+LANGSMITH_ENDPOINT = os.getenv(Constants.LANGSMITH_ENDPOINT)
+LANGSMITH_PROJECT = os.getenv(Constants.LANGSMITH_PROJECT)
+
+# LangSmith Client and prompt loading
+client = Client(api_key = LANGSMITH_API_KEY)
+rag_prompt = client.pull_prompt("research_bot_rag_prompt", include_model=False)
 
 
 # Initialize Logging
@@ -47,7 +63,7 @@ st.set_page_config(layout= Constants.WIDE)
 
 
 # Header and Description
-st.header("💬 Research Chat Bot")
+st.header(Constants.HEADER_TITLE_CHAT_BOT)
 st.markdown("---")
 st.write(
     "Upload any research paper and instantly chat with it for clear, precise answers."
@@ -64,22 +80,31 @@ if uploaded_file is not None and st.session_state.processed_file is False:
         st.toast("File uploaded successfully!")
         try:
             with st.spinner("Extracting the text ...."):
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-                    tmp_file.write(uploaded_file.read())
-                    tmp_file_path = tmp_file.name
-
-                    logger.info(f"Temporary file saved at: {tmp_file_path}")
-                    extract_text = extract_text_from_pdf(tmp_file_path)
-                    logger.info(f"Text extraction completed.{extract_text[:50]}...")
-                    
-                    pdf_qa  = PDFQA(extract_text)
-                    st.session_state.vector_store = pdf_qa.vector_store 
-                    st.session_state.pdf_qa = pdf_qa 
                 
-                    logger.info(f"PDF processing and vector store creation completed {st.session_state.vector_store}.")
+                # Generate a unique file ID 
+                file_id = str(uuid.uuid4())
+                s3_key = f"uploads/{file_id}/{uploaded_file.name}"
+                logger.info(f"Processing file with ID: {file_id} and name: {uploaded_file.name}")
+
+                # Upload the file to S3
+                logger.info("Uploading file to S3...")
+                s3_client.upload_fileobj(uploaded_file,S3_BUCKET_NAME,s3_key)
+                logger.info("Upload successful.")
+                logger.info(f"File uploaded to S3: uploads/{file_id}/{uploaded_file.name}")
+
+                if S3_BUCKET_NAME is None:
+                    raise ValueError("S3_BUCKET_NAME is not set. Please check your environment variables or configuration.")
+                extract_text = extract_text_from_pdf(S3_BUCKET_NAME, s3_key)
+                logger.info(f"Text extraction completed.{extract_text[:50]}...")
                     
-                    # Mark as processed so this block won't run again
-                    st.session_state.processed_file = True  
+                pdf_qa  = PDFQA(extract_text)
+                st.session_state.vector_store = pdf_qa.vector_store 
+                st.session_state.pdf_qa = pdf_qa 
+                
+                logger.info(f"PDF processing and vector store creation completed {st.session_state.vector_store}.")
+                    
+                # Mark as processed so this block won't run again
+                st.session_state.processed_file = True  
 
         except Exception as e:
             st.session_state.processed_file = False
@@ -99,11 +124,10 @@ if st.session_state.processed_file and st.session_state.qa_chain is None:
             llm=llm,
             retriever=retriever,
             return_source_documents=True,
-            combine_docs_chain_kwargs= {"prompt": prompts.rag_prompt},
+            combine_docs_chain_kwargs= {"prompt": rag_prompt},
             memory = memory,
             verbose = True,
             output_key = Constants.ANSWER
-             
         )
         st.session_state.qa_chain = qa_chain
 
@@ -143,6 +167,7 @@ if user_input and st.session_state.api_key and uploaded_file is not None:
                 result = st.session_state.qa_chain.invoke({"question": user_input})
                 answer = result.get("answer") or result.get("result") or str(result)  # LC versions differ
 
+                
             with st.chat_message(Constants.ASSISTANT):
                 st.markdown(answer)
             st.session_state.messages.append({"role": Constants.ASSISTANT, "content": answer})
