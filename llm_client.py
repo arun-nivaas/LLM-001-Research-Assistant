@@ -7,7 +7,7 @@ import prompts
 
 def llm_and_agent(api_key: str):
     llm = ChatGoogleGenerativeAI(
-        model = "gemini-1.5-flash",
+        model = "gemini-2.5-flash",
         google_api_key = api_key,
         safety_settings = {
     0: 2,  # DANGEROUS_CONTENT → medium block
