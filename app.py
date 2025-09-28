@@ -1,5 +1,11 @@
 import streamlit as st
 from const import Constants
+from cache_setup import init_cache
+
+
+# Initialize persistent cache
+
+db_path = init_cache()                   # Creates cache/langchain_cache.sqlite if it doesn’t exist
 
 # ---------Page Setup---------
 
