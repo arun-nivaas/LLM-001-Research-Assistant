@@ -1,9 +1,7 @@
 # import neccessary libraries
 import streamlit as st
 import logging
-from txt_extraction import extract_text_from_pdf
 from rag_pipeline import PDFQA
-import tempfile
 from llm_client_rag import get_llm_client_rag 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
@@ -13,6 +11,7 @@ import os
 from langsmith import Client
 import uuid
 from s3_client import s3_client, S3_BUCKET_NAME
+from ingestion import DoclingPDFLoader
 
 
 # Load environment variables from .env file
@@ -94,7 +93,7 @@ if uploaded_file is not None and st.session_state.processed_file is False:
 
                 if S3_BUCKET_NAME is None:
                     raise ValueError("S3_BUCKET_NAME is not set. Please check your environment variables or configuration.")
-                extract_text = extract_text_from_pdf(S3_BUCKET_NAME, s3_key)
+                extract_text = DoclingPDFLoader(bucket_name=S3_BUCKET_NAME, s3_key=s3_key).load()[0].page_content
                 logger.info(f"Text extraction completed.{extract_text[:50]}...")
                     
                 pdf_qa  = PDFQA(extract_text)

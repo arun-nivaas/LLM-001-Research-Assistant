@@ -1,7 +1,7 @@
 class Constants:
 
     # ---- Model version ----
-    VERSION = "1.0.1"
+    VERSION = "1.1.0"
 
     # ---- Header Titles ----
     HEADER_TITLE_ABOUT = "📘 About the Application"

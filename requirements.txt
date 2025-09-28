@@ -1,6 +1,4 @@
 langchain-google-genai
-pdfplumber
-python-docx
 faiss-cpu
 numpy==1.26.4
 pandas==2.2.2 
@@ -12,8 +10,7 @@ langchain-community>=0.2.0
 langchain-huggingface>=0.0.3
 sentence-transformers>=2.2.2
 langchain_experimental
-faiss-cpu>=1.7.4
-docx2txt>=0.8
+langchain_core
 pydantic
 transformers
 torch 
@@ -24,10 +21,10 @@ youtube-transcript-api
 semanticscholar
 wikipedia
 pytube
-pypdf
 langchain-chroma
 langsmith
 openevals
 boto3
 boto3-stubs
-PyPDF2
+scikit-learn
+rank-bm25
