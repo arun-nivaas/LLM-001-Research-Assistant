@@ -13,7 +13,11 @@ from docling.datamodel.accelerator_options import (
     AcceleratorDevice,
     AcceleratorOptions
 )
-from s3_client import s3_client   
+from s3_client import s3_client
+from typing import Any
+
+# Explicitly annotate s3_client type for clarity
+s3_client: Any
 
 # Preprocessing Patterns 
 PAT_FORMULA = re.compile(r"<!--\s*formula-not-decoded\s*-->", flags=re.IGNORECASE)
@@ -51,7 +55,7 @@ class DoclingPDFLoader(BaseLoader):
         # Pipeline configuration
         pipeline_options = PdfPipelineOptions()
         pipeline_options.accelerator_options = accelerator_options
-        pipeline_options.do_ocr = True
+        pipeline_options.do_ocr = False
         pipeline_options.do_table_structure = True
         pipeline_options.table_structure_options.do_cell_matching = True
         pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE
