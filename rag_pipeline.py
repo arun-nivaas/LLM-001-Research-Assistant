@@ -5,17 +5,20 @@ from langchain_community.cross_encoders import HuggingFaceCrossEncoder
 from langchain.retrievers.document_compressors import CrossEncoderReranker
 from langchain.retrievers import ContextualCompressionRetriever, EnsembleRetriever
 from langchain_community.retrievers import BM25Retriever
-import streamlit as st
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document as LCDocument
+
+embedding_model = HuggingFaceEmbeddings(model_name="BAAI/bge-base-en-v1.5")
+cross_encoder_model = HuggingFaceCrossEncoder(model_name="cross-encoder/ms-marco-MiniLM-L-6-v2")
+
 
 class PDFQA:
     def __init__(self, text: str):
         self.text = text
         self.vector_store = None
         self.retriever = None
-        self.model_name = "BAAI/bge-base-en-v1.5"
-        self.embedding_model = HuggingFaceEmbeddings(model_name = self.model_name)
+        self.embedding_model = embedding_model
+        self.cross_encoder_model = cross_encoder_model
         self._process_pdf()
 
     def _split_text(self, text: str) -> list[LCDocument]:
@@ -74,8 +77,7 @@ class PDFQA:
         )
 
         # Cross-encoder reranker
-        cross_encoder_model = HuggingFaceCrossEncoder(model_name="cross-encoder/ms-marco-MiniLM-L-6-v2")
-        reranker = CrossEncoderReranker(model=cross_encoder_model, top_n=2)
+        reranker = CrossEncoderReranker(model=self.cross_encoder_model, top_n=2)
 
         # Final Contextual Compression Retriever
         self.retriever = ContextualCompressionRetriever(
@@ -83,7 +85,7 @@ class PDFQA:
             base_retriever=hybrid_retriever
         )
 
-def rag_retriever() -> ContextualCompressionRetriever:
-    if "pdf_qa" not in st.session_state:
-        raise ValueError("⚠️ Please upload and process a PDF first.")
-    return st.session_state.pdf_qa.retriever
+# def rag_retriever() -> ContextualCompressionRetriever:
+#     if "pdf_qa" not in st.session_state:
+#         raise ValueError("⚠️ Please upload and process a PDF first.")
+#     return st.session_state.pdf_qa.retriever
