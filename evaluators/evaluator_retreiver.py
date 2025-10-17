@@ -27,7 +27,7 @@ class RetrieverEvaluator:
         emb2 = self.embed_model.encode([text2], convert_to_numpy=True)
         return cosine_similarity(emb1, emb2)[0][0]
 
-    def evaluate(self, benchmark: list[dict[str, str]], k: int = 5, similarity_threshold: float = 0.7):
+    def evaluate(self, benchmark: list[dict[str, str]], k: int , similarity_threshold: float):
         """
         benchmark: list of dicts, each with 'query' and 'answer' keys
         k: top-k retrieved chunks to consider

@@ -1,5 +1,5 @@
 import logging
-from rag_pipeline import PDFQA
+from services.rag_pipeline import PDFQA
 from llm_client_rag import get_llm_client_rag 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
@@ -43,7 +43,7 @@ class RAGService:
                 return_source_documents=True,
                 combine_docs_chain_kwargs = {"prompt": rag_prompt},
                 memory = memory,
-                verbose=True,
+                verbose=False,
                 output_key = Constants.ANSWER
             )
 
@@ -55,6 +55,8 @@ class RAGService:
         self.qa_chain = qa_chain
 
     def query(self, user_query: str):
+
+        logger.info(f"Query received: {user_query}")
 
         if not self.qa_chain:
             raise ValueError("RAG pipeline not initialized. Upload a PDF first.")
