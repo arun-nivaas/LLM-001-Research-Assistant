@@ -1,11 +1,17 @@
 from fastapi import FastAPI,HTTPException
-from models import QueryRequest, QueryResponse, ProcessPDFRequest
-from ingestion import DoclingPDFLoader
+from models import QueryRequest, QueryResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from rag_service import rag_service
-from config import settings
-
+from services.rag_service import rag_service
+from handlers.handlers import (
+    chunking_error_handler,
+    embedding_error_handler,
+    retriever_error_handler,
+    global_exception_handler,
+)
+from routers import router as process_pdf_router
+from routers.evaluation_router import router as evaluation_router
+from handlers.exceptions import ChunkingError, EmbeddingError, RetrieverError
 
 app = FastAPI(title = "Research Assistant Service")
 
@@ -17,22 +23,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_exception_handler(ChunkingError, chunking_error_handler) #type: ignore
+app.add_exception_handler(EmbeddingError, embedding_error_handler) #type: ignore
+app.add_exception_handler(RetrieverError, retriever_error_handler) #type: ignore
+app.add_exception_handler(Exception, global_exception_handler)
 
-@app.post("/process_pdf")
-async def process_pdf(request: ProcessPDFRequest):
-    try:
-        # Process PDF using Docling loader
-        extract_text = DoclingPDFLoader(
-            bucket_name = settings.S3_BUCKET_NAME,
-            s3_key = request.s3_key
-        ).load()[0].page_content
 
-        rag_service.process_pdf(extract_text, request.api_key)
-        return {"message": "PDF processed successfully."}
-
-    except Exception as e:
-        raise HTTPException(status_code = 500, detail=f"Error processing the PDF: {str(e)}")
-
+app.include_router(process_pdf_router)
 
 @app.post("/query", response_model = QueryResponse)
 async def query_manual(request:QueryRequest):
@@ -46,6 +43,7 @@ async def query_manual(request:QueryRequest):
         raise HTTPException(status_code = 500, detail=f"Error processing the PDF: {str(e)}")
 
 
+app.include_router(evaluation_router, prefix="/evaluate", tags=["Evaluation"])
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)   
